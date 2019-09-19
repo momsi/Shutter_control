@@ -1,7 +1,5 @@
 /*--------------To do
-GET RID OF DELAY !!!! > delay in shutter_auto() eliminated 
-especially in auto
--Abort as interrupt
+Maybe set the interrupt to FALLING instead od LOW (testing needed, FALLING could be missed in debouncing delays.)
 */
 
 
