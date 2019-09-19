@@ -1,5 +1,5 @@
 /*--------------To do
-GET RID OF DELAY !!!!
+GET RID OF DELAY !!!! > delay in shutter_auto() eliminated 
 especially in auto
 -Abort as interrupt
 */
@@ -70,7 +70,6 @@ Adafruit_SSD1306 display(OLED_RESET);
 //----------------------------------
 
 void abort(){
-  //shutter_close();
   time_open=0;
   time_to_open=0;
   time_sutter_was_opened=0;
@@ -122,13 +121,16 @@ void shutter_close(){
 }
 
 void shutter_auto(){
-  int i=time_to_open-1;
+  int time_remaining=time_to_open;
+  unsigned long millis_prev=0;
   shutter_open();
-  while (i>=0){
-    display_refresh(i);
+  if (EMERGENCY_ABORT_CALLED){abort();return;}
+  while (time_remaining>=0){
     if (EMERGENCY_ABORT_CALLED){abort();return;}
-    delay(850);
-    i--;}
+    if (millis() - millis_prev >= 1000){
+      millis_prev = millis();
+      display_refresh(time_remaining);
+      time_remaining--;}}
   shutter_close();
   display_menu_auto(time_to_open);
 }
@@ -209,17 +211,18 @@ void trigger_depressed(){
     shutter_open();
     time_sutter_was_opened=millis();
     while (!close_shutter){
-      if (EMERGENCY_ABORT_CALLED){abort();return;}
+      if (EMERGENCY_ABORT_CALLED){
+        abort();return;}
       time_open=millis()-time_sutter_was_opened;
       time_open=time_open/1000;
       if(time_open-delta_time>=1){
-      display_refresh(time_open);
-      delta_time++;}
+        display_refresh(time_open);
+        delta_time++;}
       if (digitalRead(TRIGGER_BUTTON_PIN)==0){
-      shutter_close();
-      close_shutter=true;
-      delay(200);
-      display_menu_manual();}}}
+        shutter_close();
+        close_shutter=true;
+        delay(200);
+        display_menu_manual();}}}
 }
 
 void emergency_abort(){
@@ -230,6 +233,8 @@ void emergency_abort(){
 //----------------------------------
 
 void setup() {
+  Serial.begin(9600);
+  Serial.println("Serial begin");
   pinMode(INTERNAL_LED_PIN,OUTPUT);
   pinMode(MODE_SWITCH_PIN,INPUT_PULLUP);
   pinMode(TRIGGER_BUTTON_PIN,INPUT_PULLUP);
