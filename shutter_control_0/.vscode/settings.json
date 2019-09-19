@@ -1,6 +1,0 @@
-{
-    "terminal.integrated.env.windows": {
-        "PATH": "C:\\Users\\TimoW\\.platformio\\penv\\Scripts;C:\\Users\\TimoW\\.platformio\\penv;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\x64\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\MATLAB\\R2019a\\bin;C:\\Program Files\\MATLAB\\MATLAB Runtime\\v94\\runtime\\win64;C:\\Program Files (x86)\\MATLAB\\MATLAB Compiler Runtime\\v7141\\runtime\\win32;C:\\Users\\TimoW\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\TimoW\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;%USERPROFILE%\\AppData\\Local\\Microsoft\\WindowsApps;;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\x64\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\MATLAB\\R2019a\\bin;C:\\Program Files\\MATLAB\\MATLAB Runtime\\v94\\runtime\\win64;C:\\Program Files (x86)\\MATLAB\\MATLAB Compiler Runtime\\v7141\\runtime\\win32;C:\\Users\\TimoW\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\TimoW\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;%USERPROFILE%\\AppData\\Local\\Microsoft\\WindowsApps;",
-        "PLATFORMIO_CALLER": "vscode"
-    }
-}

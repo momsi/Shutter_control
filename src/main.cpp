@@ -1,8 +1,3 @@
-#include <Arduino.h>
-#include <keypad.h>
-#include <Wire.h>
-#include <Adafruit_SSD1306.h>
-
 /*--------------To do
 GET RID OF DELAY !!!!
 especially in auto
@@ -39,6 +34,11 @@ Shutter-Trigger:
             
 */
 
+#include <Arduino.h>
+#include <keypad.h>
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+
 //---------------- Variables
 int INTERNAL_LED_PIN = 13;
 int MODE_SWITCH_PIN = 4;
@@ -70,18 +70,19 @@ Adafruit_SSD1306 display(OLED_RESET);
 //----------------------------------
 
 void abort(){
-    time_open=0;
-    time_to_open=0;
-    time_sutter_was_opened=0;
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(0, 0);
-    display.println("ABORTED");
-    display.display();
-    delay(1000);
-    asm volatile ("  jmp 0");
-    EMERGENCY_ABORT_CALLED=false;
+  //shutter_close();
+  time_open=0;
+  time_to_open=0;
+  time_sutter_was_opened=0;
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(20, 10);
+  display.println("ABORTED");
+  display.display();
+  delay(2000);
+  asm volatile ("  jmp 0");
+  EMERGENCY_ABORT_CALLED=false;
 }
 
 void display_menu_auto(int time){
@@ -98,7 +99,7 @@ void display_menu_manual(){
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(WHITE);
-  display.setCursor(0, 10);
+  display.setCursor(30, 10);
   display.print("Manual");
   display.display();
 }
@@ -107,7 +108,7 @@ void display_refresh(int time){
   display.clearDisplay();
   display.setTextSize(3);
   display.setTextColor(WHITE);
-  display.setCursor(55, 5);
+  display.setCursor(50, 5);
   display.println(time);
   display.display();
 }
@@ -145,7 +146,7 @@ int mode_auto(){
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0, 10);
+    display.setCursor(40, 10);
     display.print("Auto");
     display.display();
     AUTO_MODE_ENABLED=true;}
@@ -184,7 +185,7 @@ void mode_manual(){
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0, 10);
+    display.setCursor(30, 10);
     display.print("Manual");
     display.display();
     AUTO_MODE_ENABLED=false;}
@@ -197,7 +198,7 @@ void trigger_depressed(){
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0, 10);
+    display.setCursor(10, 10);
     display.print("set time!!");
     display.display();
     delay(1000);
@@ -229,14 +230,17 @@ void emergency_abort(){
 //----------------------------------
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Serial begin");
   pinMode(INTERNAL_LED_PIN,OUTPUT);
   pinMode(MODE_SWITCH_PIN,INPUT_PULLUP);
   pinMode(TRIGGER_BUTTON_PIN,INPUT_PULLUP);
   pinMode(EMERGENCY_ABORT_PIN,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
+  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, LOW);
   
+  EMERGENCY_ABORT_CALLED=false;
+  time_open = 0;
+  time_to_open = 0;
+  time_sutter_was_opened = 0;
+
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
   if (digitalRead(MODE_SWITCH_PIN)==0){
@@ -244,7 +248,7 @@ void setup() {
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0, 10);
+    display.setCursor(40, 10);
     display.print("Auto");
     display.display();}
   else{
@@ -252,7 +256,7 @@ void setup() {
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0, 10);
+    display.setCursor(30, 10);
     display.print("Manual");
     display.display();}
 }
@@ -264,5 +268,6 @@ void loop() {
     delay(200);
     trigger_depressed();}
   if (EMERGENCY_ABORT_CALLED){
-    }
+    //shutter_close();
+    abort();}
 }
