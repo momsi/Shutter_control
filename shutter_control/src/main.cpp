@@ -1,8 +1,3 @@
-#include <Arduino.h>
-#include <keypad.h>
-#include <Wire.h>
-#include <Adafruit_SSD1306.h>
-
 /*--------------To do
 GET RID OF DELAY !!!!
 especially in auto
@@ -38,6 +33,11 @@ Shutter-Trigger:
     INTERRUPT: Needs to be attached to an interrupt PIN, confirm if using different controller)
             
 */
+
+#include <Arduino.h>
+#include <keypad.h>
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
 
 //---------------- Variables
 int INTERNAL_LED_PIN = 13;
