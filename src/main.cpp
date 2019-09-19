@@ -200,13 +200,13 @@ void trigger_depressed(){
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(10, 10);
+    display.setCursor(0, 10);
     display.print("set time!!");
     display.display();
     delay(1000);
     display_menu_auto(0);}
   else if (AUTO_MODE_ENABLED==false){
-    int delta_time=0;
+    int time_next_refresh=0;
     bool close_shutter=0;
     shutter_open();
     time_sutter_was_opened=millis();
@@ -215,13 +215,13 @@ void trigger_depressed(){
         abort();return;}
       time_open=millis()-time_sutter_was_opened;
       time_open=time_open/1000;
-      if(time_open-delta_time>=1){
+      if(time_open-time_next_refresh>=1){
         display_refresh(time_open);
-        delta_time++;}
+        time_next_refresh++;}
       if (digitalRead(TRIGGER_BUTTON_PIN)==0){
         shutter_close();
         close_shutter=true;
-        delay(200);
+        delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration 
         display_menu_manual();}}}
 }
 
@@ -233,8 +233,6 @@ void emergency_abort(){
 //----------------------------------
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Serial begin");
   pinMode(INTERNAL_LED_PIN,OUTPUT);
   pinMode(MODE_SWITCH_PIN,INPUT_PULLUP);
   pinMode(TRIGGER_BUTTON_PIN,INPUT_PULLUP);
@@ -270,7 +268,7 @@ void loop() {
   digitalRead(MODE_SWITCH_PIN)==0 ? mode_auto():0;
   digitalRead(MODE_SWITCH_PIN)==1 ? mode_manual():void();
   if (digitalRead(TRIGGER_BUTTON_PIN)==0){
-    delay(200);
+    delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration
     trigger_depressed();}
   if (EMERGENCY_ABORT_CALLED){
     //shutter_close();
