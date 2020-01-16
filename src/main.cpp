@@ -19,17 +19,16 @@ Display: SSD1306 128 x 64 OLED
 Mode Switch:
     Attach to PIN D4
     Pullup!:  LOW is Auto-mode
-              HIGH is Manual-mode 
+              HIGH is Manual-mode
 
-Shutter-Trigger: 
+Shutter-Trigger:
     Attach to PIN D3 and GND
-    Pullup!:  Is triggered when pulled to GND 
+    Pullup!:  Is triggered when pulled to GND
 
 (Abort-Trigger:
     Attach to PIN D2 and GND
     Pullup!:  Is triggered when pulled to GND
     INTERRUPT: Needs to be attached to an interrupt PIN, confirm if using different controller)
-            
 */
 
 #include <Arduino.h>
@@ -42,6 +41,11 @@ int INTERNAL_LED_PIN = 13;
 int MODE_SWITCH_PIN = 4;
 int TRIGGER_BUTTON_PIN = 3;
 int EMERGENCY_ABORT_PIN =2;
+
+const int stepPin = A1; // Stepper Controller STEP pin is attached to this pin
+const int dirPin = A0; // Stepper Controller DIR pin is attached to this pin
+const int steps_per_rev = 200; // sets the steps per revolution, might need tuning over time
+const int step_delay = 1; // delay between STEP HIGH and LOW. Controlls rotation speed. Might need tuning depending on torque
 
 volatile bool EMERGENCY_ABORT_CALLED=false;
 volatile bool AUTO_MODE_ENABLED;
@@ -67,7 +71,30 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 //----------------------------------
 
+void shutter_open(){
+  digitalWrite(INTERNAL_LED_PIN,HIGH);
+  digitalWrite(dirPin,LOW);
+  for (int i = 0; i < steps_per_rev; i++) {
+    digitalWrite(stepPin, HIGH);
+    delay(step_delay);
+    digitalWrite(stepPin, LOW);
+    delay(step_delay);
+
+}}
+
+void shutter_close(){
+  digitalWrite(INTERNAL_LED_PIN,LOW);
+  digitalWrite(dirPin,HIGH);
+  for (int i = 0; i < steps_per_rev; i++) {
+    digitalWrite(stepPin, HIGH);
+    delay(step_delay);
+    digitalWrite(stepPin, LOW);
+    delay(step_delay);
+}}
+
 void abort(){
+  shutter_close();
+  EMERGENCY_ABORT_CALLED=false;
   time_open=0;
   time_to_open=0;
   time_sutter_was_opened=0;
@@ -110,14 +137,6 @@ void display_refresh(int time){
   display.display();
 }
 
-void shutter_open(){
-  digitalWrite(INTERNAL_LED_PIN,HIGH);
-}
-
-void shutter_close(){
-  digitalWrite(INTERNAL_LED_PIN,LOW);
-}
-
 void shutter_auto(){
   int time_remaining=time_to_open;
   unsigned long millis_prev=0;
@@ -150,18 +169,18 @@ int mode_auto(){
     display.print("Auto");
     display.display();
     AUTO_MODE_ENABLED=true;}
-  
+
   switch (key){
     case NO_KEY:
       break;
-    
+
     case '#':   // Enter
       userinput[count] = '\0';
       input = atoi(userinput);
       time_to_open = input;
       display_menu_auto(time_to_open);
       break;
-    
+
     case '*':   // Delete Input
       count = 0;
       memset(userinput,0,sizeof(userinput));
@@ -169,7 +188,7 @@ int mode_auto(){
       time_to_open = input;
       display_menu_auto(time_to_open);
       break;
-    
+
     default:
       if (count < 3){     // Number entered
         userinput[count] = key;
@@ -219,24 +238,27 @@ void trigger_depressed(){
       if (digitalRead(TRIGGER_BUTTON_PIN)==0){
         shutter_close();
         close_shutter=true;
-        delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration 
+        delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration
         display_menu_manual();}}}
 }
 
 void emergency_abort(){
-  shutter_close();
+  delay(200 );
   EMERGENCY_ABORT_CALLED=true;
 }
 
 //----------------------------------
 
 void setup() {
+  pinMode(stepPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
+  digitalWrite(dirPin,HIGH);
   pinMode(INTERNAL_LED_PIN,OUTPUT);
   pinMode(MODE_SWITCH_PIN,INPUT_PULLUP);
   pinMode(TRIGGER_BUTTON_PIN,INPUT_PULLUP);
   pinMode(EMERGENCY_ABORT_PIN,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, LOW);
-  
+  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
+
   EMERGENCY_ABORT_CALLED=false;
   time_open = 0;
   time_to_open = 0;
@@ -269,6 +291,5 @@ void loop() {
     delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration
     trigger_depressed();}
   if (EMERGENCY_ABORT_CALLED){
-    //shutter_close();
     abort();}
 }
