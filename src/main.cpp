@@ -4,7 +4,7 @@ Maybe set the interrupt to FALLING instead od LOW (testing needed, FALLING could
 
 
 /*-------------Setup
-Using an Arduino Nano clone
+Using an Arduino with AT Mega 328p
 
 Keypad: generic 4x4 (non serial)
     Attach to Pins (from left to right): 12,11,10,9,8,7,6,5
@@ -16,6 +16,17 @@ Display: SSD1306 128 x 64 OLED
                   SDA:A4
     I2C Adress:   0x3C
 
+Stepper Driver: A4988
+    Attach PINS:  VMOT: 12V PSU
+                  MOTGND: GND of 12V PSU
+                  1A, 2A, 1B, 2B: Phases of stepper
+                  VDD: 5V
+                  GND: GND
+                  DIR: A0
+                  STEP: A1
+                  RST: short to SLEEP
+                  SLEEP: short to RST
+                  ENABLE: A2
 Mode Switch:
     Attach to PIN D4
     Pullup!:  LOW is Auto-mode
@@ -42,6 +53,7 @@ int MODE_SWITCH_PIN = 4;
 int TRIGGER_BUTTON_PIN = 3;
 int EMERGENCY_ABORT_PIN =2;
 
+const int enablePin = A2; // Stepper Controller ENABLE pin is attached to this pin
 const int stepPin = A1; // Stepper Controller STEP pin is attached to this pin
 const int dirPin = A0; // Stepper Controller DIR pin is attached to this pin
 const int steps_per_rev = 200; // sets the steps per revolution, might need tuning over time
@@ -71,26 +83,36 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 //----------------------------------
 
+void emergency_abort(){
+  delay(200);
+  EMERGENCY_ABORT_CALLED=true;
+}
+
 void shutter_open(){
   digitalWrite(INTERNAL_LED_PIN,HIGH);
+  digitalWrite(enablePin,LOW);
   digitalWrite(dirPin,LOW);
+  delay(100);
   for (int i = 0; i < steps_per_rev; i++) {
     digitalWrite(stepPin, HIGH);
     delay(step_delay);
     digitalWrite(stepPin, LOW);
-    delay(step_delay);
-
-}}
+    delay(step_delay);}
+  digitalWrite(enablePin,HIGH);
+}
 
 void shutter_close(){
   digitalWrite(INTERNAL_LED_PIN,LOW);
+  digitalWrite(enablePin,LOW);
   digitalWrite(dirPin,HIGH);
+  delay(100); 
   for (int i = 0; i < steps_per_rev; i++) {
     digitalWrite(stepPin, HIGH);
     delay(step_delay);
     digitalWrite(stepPin, LOW);
-    delay(step_delay);
-}}
+    delay(step_delay);}
+  digitalWrite(enablePin,HIGH);
+}
 
 void abort(){
   shutter_close();
@@ -140,8 +162,10 @@ void display_refresh(int time){
 void shutter_auto(){
   int time_remaining=time_to_open;
   unsigned long millis_prev=0;
+  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
+  EMERGENCY_ABORT_CALLED=false;
   shutter_open();
-  if (EMERGENCY_ABORT_CALLED){abort();return;}
+  //if (EMERGENCY_ABORT_CALLED){abort();return;}
   while (time_remaining>=0){
     if (EMERGENCY_ABORT_CALLED){abort();return;}
     if (millis() - millis_prev >= 1000){
@@ -149,6 +173,7 @@ void shutter_auto(){
       display_refresh(time_remaining);
       time_remaining--;}}
   shutter_close();
+  detachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN));
   display_menu_auto(time_to_open);
 }
 
@@ -225,6 +250,8 @@ void trigger_depressed(){
   else if (AUTO_MODE_ENABLED==false){
     int time_next_refresh=0;
     bool close_shutter=0;
+    attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
+    EMERGENCY_ABORT_CALLED=false;
     shutter_open();
     time_sutter_was_opened=millis();
     while (!close_shutter){
@@ -237,29 +264,31 @@ void trigger_depressed(){
         time_next_refresh++;}
       if (digitalRead(TRIGGER_BUTTON_PIN)==0){
         shutter_close();
+        detachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN));
         close_shutter=true;
         delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration
         display_menu_manual();}}}
 }
 
-void emergency_abort(){
-  delay(200 );
-  EMERGENCY_ABORT_CALLED=true;
-}
-
 //----------------------------------
 
 void setup() {
+  delay(100);
+  EMERGENCY_ABORT_CALLED=false;
+  delay(100);
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin,HIGH);
   pinMode(stepPin, OUTPUT);
+  digitalWrite(stepPin,LOW);
   pinMode(dirPin, OUTPUT);
-  digitalWrite(dirPin,HIGH);
+  digitalWrite(dirPin,LOW);
   pinMode(INTERNAL_LED_PIN,OUTPUT);
   pinMode(MODE_SWITCH_PIN,INPUT_PULLUP);
   pinMode(TRIGGER_BUTTON_PIN,INPUT_PULLUP);
   pinMode(EMERGENCY_ABORT_PIN,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
-
-  EMERGENCY_ABORT_CALLED=false;
+  //attachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN), emergency_abort, FALLING);
+  //detachInterrupt(digitalPinToInterrupt(EMERGENCY_ABORT_PIN));
+  delay(500);
   time_open = 0;
   time_to_open = 0;
   time_sutter_was_opened = 0;
@@ -282,6 +311,9 @@ void setup() {
     display.setCursor(30, 10);
     display.print("Manual");
     display.display();}
+
+  EMERGENCY_ABORT_CALLED=false;
+  digitalWrite(enablePin,HIGH);
 }
 
 void loop() {
@@ -290,6 +322,6 @@ void loop() {
   if (digitalRead(TRIGGER_BUTTON_PIN)==0){
     delay(200); // for debouncing --- could be replaced with millis(), but not urgently needed due to small duration
     trigger_depressed();}
-  if (EMERGENCY_ABORT_CALLED){
-    abort();}
+  //if (EMERGENCY_ABORT_CALLED){
+  //  abort();}
 }
