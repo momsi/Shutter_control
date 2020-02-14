@@ -1,5 +1,5 @@
 /*--------------To do
-Maybe set the interrupt to FALLING instead od LOW (testing needed, FALLING could be missed in debouncing delays.)
+
 */
 
 
@@ -36,10 +36,10 @@ Shutter-Trigger:
     Attach to PIN D3 and GND
     Pullup!:  Is triggered when pulled to GND
 
-(Abort-Trigger:
+Abort-Trigger:
     Attach to PIN D2 and GND
     Pullup!:  Is triggered when pulled to GND
-    INTERRUPT: Needs to be attached to an interrupt PIN, confirm if using different controller)
+    INTERRUPT: Needs to be attached to an interrupt PIN, confirm if using different controller
 */
 
 #include <Arduino.h>
@@ -57,7 +57,7 @@ const int enablePin = A2; // Stepper Controller ENABLE pin is attached to this p
 const int stepPin = A1; // Stepper Controller STEP pin is attached to this pin
 const int dirPin = A0; // Stepper Controller DIR pin is attached to this pin
 const int steps_per_rev = 200; // sets the steps per revolution, might need tuning over time
-const int step_delay = 1; // delay between STEP HIGH and LOW. Controlls rotation speed. Might need tuning depending on torque
+const int step_delay = 4; // delay between STEP HIGH and LOW. Controlls rotation speed. Might need tuning depending on torque and overswing
 
 volatile bool EMERGENCY_ABORT_CALLED=false;
 volatile bool AUTO_MODE_ENABLED;
